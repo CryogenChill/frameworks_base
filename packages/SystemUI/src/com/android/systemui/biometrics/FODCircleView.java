@@ -776,7 +776,11 @@ public class FODCircleView extends ImageView implements ConfigurationListener {
         mPressedParams.x = mParams.x = x;
         mPressedParams.y = mParams.y = y;
 
+<<<<<<< HEAD
         if (mIsDreaming && !mIsCircleShowing) {
+=======
+        if (mIsDreaming) {
+>>>>>>> 26b3fee02e2 (SystemUI: Fod: Aod content should move only in Y)
             mParams.y += mDreamingOffsetY;
             mFODAnimation.updateParams(mParams.y);
         }
