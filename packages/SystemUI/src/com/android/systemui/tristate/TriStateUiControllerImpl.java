@@ -142,8 +142,7 @@ public class TriStateUiControllerImpl implements TriStateUiController,
 
         @Override
         public void onConfigurationChanged() {
-            mHandler.sendEmptyMessage(MSG_DIALOG_DISMISS);
-            initDialog();
+            updateTriStateLayout();
         }
     };
 
@@ -259,6 +258,18 @@ public class TriStateUiControllerImpl implements TriStateUiController,
     @Override
     public void onUiModeChanged() {
         mContext.getTheme().applyStyle(mContext.getThemeResId(), true);
+        initDialog();
+    }
+
+    private void checkOrientationType() {
+        Display display = DisplayManagerGlobal.getInstance().getRealDisplay(0);
+        if (display != null) {
+            int rotation = display.getRotation();
+            if (rotation != mOrientationType) {
+                mOrientationType = rotation;
+                updateTriStateLayout();
+            }
+        }
     }
 
     public void init(int windowType, UserActivityListener listener) {
@@ -277,10 +288,6 @@ public class TriStateUiControllerImpl implements TriStateUiController,
     }
 
     private void initDialog() {
-        if (mDialog != null) {
-            mDialog.dismiss();
-            mDialog = null;
-        }
         mDialog = new Dialog(mContext, R.style.qs_theme);
         mShowing = false;
         mWindow = mDialog.getWindow();
@@ -309,6 +316,16 @@ public class TriStateUiControllerImpl implements TriStateUiController,
         mDialogView = (ViewGroup) mDialog.findViewById(R.id.tri_state_layout);
         mTriStateIcon = (ImageView) mDialog.findViewById(R.id.tri_state_icon);
         mTriStateText = (TextView) mDialog.findViewById(R.id.tri_state_text);
+    }
+
+    private void registerOrientationListener(boolean enable) {
+        if (mOrientationListener.canDetectOrientation() && enable) {
+            Log.v(TAG, "Can detect orientation");
+            mOrientationListener.enable();
+            return;
+        }
+        Log.v(TAG, "Cannot detect orientation");
+        mOrientationListener.disable();
     }
 
     private void updateTriStateLayout() {
@@ -504,7 +521,6 @@ public class TriStateUiControllerImpl implements TriStateUiController,
                     }
                     mDialogPosition = positionY2;
                 }
-
                 positionY = res.getDimensionPixelSize(R.dimen.tri_state_dialog_padding);
                 mWindowLayoutParams.gravity = gravity;
                 mWindowLayoutParams.y = positionY2 - positionY;
@@ -518,7 +534,8 @@ public class TriStateUiControllerImpl implements TriStateUiController,
     private void handleShow() {
         mHandler.removeMessages(MSG_DIALOG_SHOW);
         if (!mShowing) {
-            updateTriStateLayout();
+            registerOrientationListener(true);
+            checkOrientationType();
             mShowing = true;
             mDialog.show();
             if (mListener != null) {
@@ -559,6 +576,7 @@ public class TriStateUiControllerImpl implements TriStateUiController,
     public void onDensityOrFontScaleChanged() {
         mHandler.sendEmptyMessage(MSG_DIALOG_DISMISS);
         initDialog();
+        updateTriStateLayout();
     }
 
     public int getAttrColor(int attr) {
